@@ -1,23 +1,61 @@
-# urlcheck — lista de servicios
+# urlcheck — servicios de IA (chat + API)
 # Formato:  NOMBRE  URL
-# También acepta: NOMBRE | URL
-# Líneas vacías y las que empiezan con # se ignoran.
+# Actualizado 2026-09-10
+# Fuentes: Similarweb / rankings de chatbots + sitios oficiales.
 
-Google          https://www.google.com
-Cloudflare      https://www.cloudflare.com
-Wikipedia       https://www.wikipedia.org
-GitHub          https://github.com
-YouTube         https://www.youtube.com
-Netflix         https://www.netflix.com
-Disney+         https://www.disneyplus.com
-Max             https://www.max.com
-Prime Video     https://www.primevideo.com
-Spotify         https://open.spotify.com
-Twitch          https://www.twitch.tv
-Reddit          https://www.reddit.com
-X               https://x.com
-WhatsApp Web    https://web.whatsapp.com
-Telegram        https://web.telegram.org
-Outlook         https://outlook.live.com
-Proton Mail     https://mail.proton.me
-example.com     https://example.com
+# ---------------------------------------------------------------------------
+# Frontier (EE.UU. / Europa)
+# ---------------------------------------------------------------------------
+ChatGPT                 https://chatgpt.com
+OpenAI                  https://openai.com
+OpenAI Platform         https://platform.openai.com
+Gemini                  https://gemini.google.com
+Google AI Studio        https://aistudio.google.com
+Claude                  https://claude.ai
+Anthropic               https://www.anthropic.com
+Grok                    https://grok.com
+xAI                     https://x.ai
+xAI Docs                https://docs.x.ai
+Copilot                 https://copilot.microsoft.com
+Perplexity              https://www.perplexity.ai
+Meta AI                 https://www.meta.ai
+Character.AI            https://character.ai
+Mistral Le Chat         https://chat.mistral.ai
+Mistral                 https://mistral.ai
+Mistral Console         https://console.mistral.ai
+Manus                   https://manus.im
+Lovable                 https://lovable.dev
+
+# ---------------------------------------------------------------------------
+# Abiertos / routers de inferencia
+# ---------------------------------------------------------------------------
+OpenRouter              https://openrouter.ai
+Hugging Face            https://huggingface.co
+HF Playground           https://huggingface.co/chat
+Groq                    https://groq.com
+Groq Console            https://console.groq.com
+Together AI             https://www.together.ai
+Fireworks AI            https://fireworks.ai
+Replicate               https://replicate.com
+Cerebras                https://www.cerebras.ai
+SiliconFlow             https://www.siliconflow.com
+
+# ---------------------------------------------------------------------------
+# China / open-weight (chat de consumidor + plataformas)
+# ---------------------------------------------------------------------------
+DeepSeek Chat           https://chat.deepseek.com
+DeepSeek                https://www.deepseek.com
+DeepSeek Platform       https://platform.deepseek.com
+Qwen Chat               https://chat.qwen.ai
+Qwen                    https://qwen.ai
+Kimi                    https://www.kimi.com
+Kimi International      https://www.kimi.ai
+Kimi Platform           https://platform.kimi.com
+Doubao                  https://www.doubao.com
+Yuanbao                 https://yuanbao.tencent.com
+Z.ai                    https://chat.z.ai
+ChatGLM                 https://chatglm.cn
+MiniMax                 https://www.minimax.io
+Ernie                   https://chat.baidu.com
+Ernie Site              https://ernie.baidu.com
+Quark                   https://quark.sm.cn
