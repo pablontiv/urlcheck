@@ -1,0 +1,23 @@
+# urlcheck — lista de servicios
+# Formato:  NOMBRE  URL
+# También acepta: NOMBRE | URL
+# Líneas vacías y las que empiezan con # se ignoran.
+
+Google          https://www.google.com
+Cloudflare      https://www.cloudflare.com
+Wikipedia       https://www.wikipedia.org
+GitHub          https://github.com
+YouTube         https://www.youtube.com
+Netflix         https://www.netflix.com
+Disney+         https://www.disneyplus.com
+Max             https://www.max.com
+Prime Video     https://www.primevideo.com
+Spotify         https://open.spotify.com
+Twitch          https://www.twitch.tv
+Reddit          https://www.reddit.com
+X               https://x.com
+WhatsApp Web    https://web.whatsapp.com
+Telegram        https://web.telegram.org
+Outlook         https://outlook.live.com
+Proton Mail     https://mail.proton.me
+example.com     https://example.com
