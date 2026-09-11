@@ -32,6 +32,27 @@ go build -o urlcheck .
 ./urlcheck
 ```
 
+## Binarios Linux / macOS
+
+Pipeline: `.github/workflows/binaries.yml`
+
+| OS | Arch |
+|----|------|
+| linux | amd64, arm64 |
+| darwin (macOS) | amd64, arm64 |
+
+Se corre en push a `main`, PRs, tags `v*` y con `Actions → binaries → Run workflow`.
+
+- Cada job sube un artifact `urlcheck-<os>-<arch>`
+- Un tag `v0.1.0` publica un Release con los cuatro binarios
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+El binario no embebe `services.txt`; déjalo al lado o usa `-list`.
+
 ## Estados
 
 | Estado | Sitio (`web`) | API (`api`) |
