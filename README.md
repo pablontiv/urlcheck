@@ -41,15 +41,11 @@ Pipeline: `.github/workflows/binaries.yml`
 | linux | amd64, arm64 |
 | darwin (macOS) | amd64, arm64 |
 
-Se corre en push a `main`, PRs, tags `v*` y con `Actions → binaries → Run workflow`.
+El build corre **solo al mergear a `main`**. Un tag `v*` publica un Release.
+No corre en PRs ni a mano.
 
-- Cada job sube un artifact `urlcheck-<os>-<arch>`
-- Un tag `v0.1.0` publica un Release con los cuatro binarios
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
+- Cada merge sube artifacts `urlcheck-<os>-<arch>`
+- `git tag v0.1.0 && git push origin v0.1.0` publica el Release
 
 El binario no embebe `services.txt`; déjalo al lado o usa `-list`.
 
