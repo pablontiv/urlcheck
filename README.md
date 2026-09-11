@@ -13,16 +13,8 @@ curl -fsSL https://raw.githubusercontent.com/pablontiv/urlcheck/main/install.sh 
 Instala el binario en `~/.local/bin` y la lista en `~/.config/urlcheck/services.txt`.
 
 ```bash
-# otro destino
 curl -fsSL https://raw.githubusercontent.com/pablontiv/urlcheck/main/install.sh | PREFIX=/usr/local/bin sh
-
-# versión concreta (cuando existan releases)
 curl -fsSL https://raw.githubusercontent.com/pablontiv/urlcheck/main/install.sh | URLCHECK_VERSION=v0.1.0 sh
-```
-
-Hoy no hay tag de Release: el script clona y compila con `go` si hace falta.
-
-```bash
 urlcheck -list ~/.config/urlcheck/services.txt
 ```
 
@@ -49,25 +41,16 @@ go run . -json
 go run . -method GET
 ```
 
-```bash
-go build -o urlcheck .
-./urlcheck
-```
-
-## Binarios Linux / macOS
+## Binarios y releases
 
 Pipeline: `.github/workflows/binaries.yml`
 
-| OS | Arch |
-|----|------|
-| linux | amd64, arm64 |
-| darwin (macOS) | amd64, arm64 |
+Cada **merge a `main`**:
+1. Compila linux/darwin × amd64/arm64
+2. Sube artifacts
+3. Crea un GitHub Release (`v0.1.0`, luego `v0.1.1`, …) con los cuatro binarios
 
-El build corre **solo al mergear a `main`**. Un tag `v*` publica un Release.
-
-```bash
-git tag v0.1.0 && git push origin v0.1.0
-```
+No corre en PRs. `install.sh` toma el último Release.
 
 ## Estados
 
