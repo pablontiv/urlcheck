@@ -3,7 +3,6 @@ name: binaries
 on:
   push:
     branches: [main]
-    tags: ["v*"]
 
 permissions:
   contents: write
@@ -49,16 +48,42 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
 
+      - name: Next version
+        id: ver
+        run: |
+          git fetch --tags --force
+          last=$(git tag -l 'v*.*.*' --sort=-v:refname | head -n1)
+          if [ -z "$last" ]; then
+            tag=v0.1.0
+          else
+            ver=${last#v}
+            major=${ver%%.*}
+            rest=${ver#*.}
+            minor=${rest%%.*}
+            patch=${rest#*.}
+            patch=${patch%%.*}
+            tag="v${major}.${minor}.$((patch + 1))"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "next $tag (prev ${last:-none})"
+
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
           files: dist/*
           generate_release_notes: true
+          make_latest: true
