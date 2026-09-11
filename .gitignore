@@ -1,15 +1,4 @@
-# Binarios
-urlcheck
-urlcheck.exe
+/urlcheck
+/urlcheck-*
+/dist/
 *.exe
-*.test
-*.out
-
-# Go
-/vendor/
-
-# IDE / OS
-.idea/
-.vscode/
-*.swp
-.DS_Store
