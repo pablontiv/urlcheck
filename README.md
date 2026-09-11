@@ -4,6 +4,28 @@ CLI en Go para responder: **¿qué chats y APIs de agentes puedo usar desde esta
 
 Lee URLs desde un archivo plano y comprueba si el host responde, si el DNS las hunde o si hay 403/451.
 
+## Instalar
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pablontiv/urlcheck/main/install.sh | sh
+```
+
+Instala el binario en `~/.local/bin` y la lista en `~/.config/urlcheck/services.txt`.
+
+```bash
+# otro destino
+curl -fsSL https://raw.githubusercontent.com/pablontiv/urlcheck/main/install.sh | PREFIX=/usr/local/bin sh
+
+# versión concreta (cuando existan releases)
+curl -fsSL https://raw.githubusercontent.com/pablontiv/urlcheck/main/install.sh | URLCHECK_VERSION=v0.1.0 sh
+```
+
+Hoy no hay tag de Release: el script clona y compila con `go` si hace falta.
+
+```bash
+urlcheck -list ~/.config/urlcheck/services.txt
+```
+
 ## Formato
 
 ```
@@ -42,12 +64,10 @@ Pipeline: `.github/workflows/binaries.yml`
 | darwin (macOS) | amd64, arm64 |
 
 El build corre **solo al mergear a `main`**. Un tag `v*` publica un Release.
-No corre en PRs ni a mano.
 
-- Cada merge sube artifacts `urlcheck-<os>-<arch>`
-- `git tag v0.1.0 && git push origin v0.1.0` publica el Release
-
-El binario no embebe `services.txt`; déjalo al lado o usa `-list`.
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
 
 ## Estados
 
