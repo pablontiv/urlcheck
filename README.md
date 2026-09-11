@@ -1,28 +1,21 @@
 # urlcheck
 
-CLI pequeña en Go para responder: **¿qué servicios de esta lista puedo usar desde mi red?**
+CLI en Go para responder: **¿qué chats y APIs de agentes puedo usar desde esta computadora?**
 
-Lee URLs desde un archivo plano (estilo hosts / blocklist) y comprueba si responden, si el DNS las hunde o si el servidor contesta 403/451.
+Lee URLs desde un archivo plano y comprueba si el host responde, si el DNS las hunde o si hay 403/451.
 
-No incluye ni recomienda listas de terceros. Tú pones las URLs.
-
-## Formato del archivo
-
-`services.txt` (o el que pases con `-list`):
+## Formato
 
 ```
-# comentarios con #
-Google          https://www.google.com
-Netflix         https://www.netflix.com
-Mi portal       https://ejemplo.tld/login
+# comentarios
+ChatGPT                 https://chatgpt.com
+OpenAI API              https://api.openai.com/v1                 api
 ```
 
-También vale:
+Tercera columna opcional: `web` (sitio) o `api` (base URL que usan agentes / SDKs).
+Si omites el tipo, se infiere por el nombre o el host (`api.`, `/v1`, etc.).
 
-```
-Nombre | https://ejemplo.tld/path
-https://solo-una-url.tld
-```
+También vale `Nombre | URL api`.
 
 ## Uso
 
@@ -30,31 +23,25 @@ https://solo-una-url.tld
 go run .                         # usa services.txt
 go run . -list mis_urls.txt
 go run . -timeout 5s -workers 20
-go run . -json                   # salida máquina
-go run . -insecure               # TLS con cert raro
+go run . -json
 go run . -method GET
 ```
 
-Compilar:
-
 ```bash
 go build -o urlcheck .
-./urlcheck -list services.txt
+./urlcheck
 ```
 
-## Qué significa cada estado
+## Estados
 
-| Estado    | Criterio |
-|-----------|----------|
-| **OK**    | HTTP 2xx/3xx (o 401: el host vive y pide login) |
-| **BLOCKED** | DNS a loopback/sinkhole, HTTP 451 o 403 |
-| **DOWN**  | timeout, conexión rechazada, 5xx, DNS roto |
-| **ERROR** | TLS u otro fallo |
+| Estado | Sitio (`web`) | API (`api`) |
+|--------|---------------|-------------|
+| **OK** | 2xx/3xx o 401 | Cualquier HTTP excepto 451/5xx: el endpoint es alcanzable (aunque pida key) |
+| **BLOCKED** | sinkhole DNS, 451, 403 | sinkhole DNS o 451 |
+| **DOWN** | timeout, refused, 5xx, DNS roto | timeout, refused, 5xx, DNS roto |
+| **ERROR** | TLS u otro | TLS u otro |
 
-Un 403 no siempre es censura (puede ser WAF). Un timeout tampoco: el servidor puede estar caído. La herramienta reporta lo que ve **desde tu red actual**.
+Un 403 en un *sitio* suele ser WAF, no siempre censura de ISP.
+Un 401/403/404 en una *API* casi siempre significa “el host vive y pide autenticación”: el agente **puede** apuntar ahí.
 
-## Notas
-
-- Solo comprueba alcanzabilidad HTTP(S). No valida usuarios, tokens ni listas M3U.
-- Respeta `HTTP_PROXY` / `HTTPS_PROXY` si están definidos.
-- HEAD primero; si el servidor no lo acepta, reintenta con GET.
+La herramienta no valida API keys. Solo alcanzabilidad de red.

@@ -1,10 +1,10 @@
-# urlcheck — servicios de IA (chat + API)
-# Formato:  NOMBRE  URL
+# urlcheck — chats y APIs de agentes
+# Formato:  NOMBRE  URL  [web|api]
+# El tipo "api" marca el endpoint que usan Cursor / Continue / OpenClaw / SDKs.
 # Actualizado 2026-09-10
-# Fuentes: Similarweb / rankings de chatbots + sitios oficiales.
 
 # ---------------------------------------------------------------------------
-# Frontier (EE.UU. / Europa)
+# Frontier — chat
 # ---------------------------------------------------------------------------
 ChatGPT                 https://chatgpt.com
 OpenAI                  https://openai.com
@@ -27,7 +27,18 @@ Manus                   https://manus.im
 Lovable                 https://lovable.dev
 
 # ---------------------------------------------------------------------------
-# Abiertos / routers de inferencia
+# Frontier — API (lo que un agente en la PC realmente llama)
+# ---------------------------------------------------------------------------
+OpenAI API              https://api.openai.com/v1                 api
+Anthropic API           https://api.anthropic.com/v1              api
+Gemini API              https://generativelanguage.googleapis.com/v1beta  api
+Gemini OpenAI-compat    https://generativelanguage.googleapis.com/v1beta/openai  api
+xAI API                 https://api.x.ai/v1                       api
+Mistral API             https://api.mistral.ai/v1                 api
+Perplexity API          https://api.perplexity.ai                 api
+
+# ---------------------------------------------------------------------------
+# Abiertos / routers — web
 # ---------------------------------------------------------------------------
 OpenRouter              https://openrouter.ai
 Hugging Face            https://huggingface.co
@@ -41,7 +52,21 @@ Cerebras                https://www.cerebras.ai
 SiliconFlow             https://www.siliconflow.com
 
 # ---------------------------------------------------------------------------
-# China / open-weight (chat de consumidor + plataformas)
+# Abiertos / routers — API
+# ---------------------------------------------------------------------------
+OpenRouter API          https://openrouter.ai/api/v1              api
+Hugging Face Router     https://router.huggingface.co/v1          api
+Groq API                https://api.groq.com/openai/v1            api
+Together API            https://api.together.xyz/v1               api
+Fireworks API           https://api.fireworks.ai/inference/v1     api
+Replicate API           https://api.replicate.com/v1              api
+Cerebras API            https://api.cerebras.ai/v1                api
+SiliconFlow API         https://api.siliconflow.cn/v1             api
+NVIDIA NIM              https://integrate.api.nvidia.com/v1       api
+Ollama Cloud            https://ollama.com/v1                     api
+
+# ---------------------------------------------------------------------------
+# China / open-weight — chat
 # ---------------------------------------------------------------------------
 DeepSeek Chat           https://chat.deepseek.com
 DeepSeek                https://www.deepseek.com
@@ -59,3 +84,17 @@ MiniMax                 https://www.minimax.io
 Ernie                   https://chat.baidu.com
 Ernie Site              https://ernie.baidu.com
 Quark                   https://quark.sm.cn
+
+# ---------------------------------------------------------------------------
+# China / open-weight — API
+# ---------------------------------------------------------------------------
+DeepSeek API            https://api.deepseek.com/v1               api
+Qwen DashScope Intl     https://dashscope-intl.aliyuncs.com/compatible-mode/v1  api
+Qwen DashScope CN       https://dashscope.aliyuncs.com/compatible-mode/v1       api
+Kimi API Intl           https://api.moonshot.ai/v1                api
+Kimi API CN             https://api.moonshot.cn/v1                api
+Z.ai API                https://api.z.ai/api/paas/v4              api
+Zhipu API CN            https://open.bigmodel.cn/api/paas/v4      api
+MiniMax API             https://api.minimax.io/v1                 api
+Doubao Ark CN           https://ark.cn-beijing.volces.com/api/v3  api
+Ernie Qianfan           https://qianfan.baidubce.com/v2           api
