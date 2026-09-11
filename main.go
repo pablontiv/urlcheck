@@ -32,11 +32,13 @@ const (
 type Service struct {
 	Name string
 	URL  string
+	Kind string // "web" o "api"
 }
 
 type Result struct {
 	Name       string        `json:"name"`
 	URL        string        `json:"url"`
+	Kind       string        `json:"kind"`
 	Status     Status        `json:"status"`
 	HTTPCode   int           `json:"http_code,omitempty"`
 	Latency    time.Duration `json:"latency_ms"`
@@ -52,7 +54,7 @@ var sinkholeIPs = map[string]bool{
 	"127.0.0.1":  true,
 	"0.0.0.0":    true,
 	"::1":        true,
-	"198.18.0.1": true, // dummy / filter frecuente
+	"198.18.0.1": true,
 }
 
 func main() {
@@ -83,12 +85,9 @@ func main() {
 	client := &http.Client{
 		Timeout: *timeout,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: *insecure},
-			Proxy:           http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   *timeout,
-				KeepAlive: 0,
-			}).DialContext,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: *insecure},
+			Proxy:                 http.ProxyFromEnvironment,
+			DialContext:           (&net.Dialer{Timeout: *timeout, KeepAlive: 0}).DialContext,
 			DisableKeepAlives:     true,
 			TLSHandshakeTimeout:   *timeout,
 			ResponseHeaderTimeout: *timeout,
@@ -131,7 +130,7 @@ func loadList(path string) ([]Service, error) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		name, rawURL, ok := parseLine(line)
+		name, rawURL, kind, ok := parseLine(line)
 		if !ok {
 			fmt.Fprintf(os.Stderr, "aviso: línea %d ignorada: %q\n", lineNo, line)
 			continue
@@ -140,44 +139,88 @@ func loadList(path string) ([]Service, error) {
 			fmt.Fprintf(os.Stderr, "aviso: URL inválida en línea %d (%s): %v\n", lineNo, name, err)
 			continue
 		}
-		out = append(out, Service{Name: name, URL: rawURL})
+		out = append(out, Service{Name: name, URL: rawURL, Kind: kind})
 	}
 	return out, sc.Err()
 }
 
-func parseLine(line string) (name, rawURL string, ok bool) {
+func parseLine(line string) (name, rawURL, kind string, ok bool) {
+	kind = "web"
 	if strings.Contains(line, "|") {
 		parts := strings.SplitN(line, "|", 2)
 		name = strings.TrimSpace(parts[0])
-		rawURL = strings.TrimSpace(parts[1])
-		if name == "" || rawURL == "" {
-			return "", "", false
+		rest := strings.Fields(strings.TrimSpace(parts[1]))
+		if name == "" || len(rest) == 0 {
+			return "", "", "", false
 		}
-		return name, rawURL, true
+		rawURL = rest[0]
+		if len(rest) > 1 {
+			kind = normalizeKind(rest[1])
+		} else {
+			kind = inferKind(name, rawURL)
+		}
+		return name, rawURL, kind, true
 	}
 
 	fields := strings.Fields(line)
 	if len(fields) < 2 {
-		// una sola columna: usar host como nombre
 		if len(fields) == 1 && looksLikeURL(fields[0]) {
 			u, err := url.Parse(fields[0])
 			if err != nil {
-				return "", "", false
+				return "", "", "", false
 			}
 			n := u.Hostname()
 			if n == "" {
 				n = fields[0]
 			}
-			return n, fields[0], true
+			return n, fields[0], inferKind(n, fields[0]), true
 		}
-		return "", "", false
+		return "", "", "", false
 	}
-	rawURL = fields[len(fields)-1]
+
+	last := fields[len(fields)-1]
+	if isKindToken(last) && len(fields) >= 3 && looksLikeURL(fields[len(fields)-2]) {
+		return strings.Join(fields[:len(fields)-2], " "), fields[len(fields)-2], normalizeKind(last), true
+	}
+
+	rawURL = last
 	name = strings.Join(fields[:len(fields)-1], " ")
 	if !looksLikeURL(rawURL) {
-		return "", "", false
+		return "", "", "", false
 	}
-	return name, rawURL, true
+	return name, rawURL, inferKind(name, rawURL), true
+}
+
+func isKindToken(s string) bool {
+	switch strings.ToLower(s) {
+	case "api", "web", "agent":
+		return true
+	default:
+		return false
+	}
+}
+
+func normalizeKind(s string) string {
+	if strings.ToLower(s) == "api" || strings.ToLower(s) == "agent" {
+		return "api"
+	}
+	return "web"
+}
+
+func inferKind(name, rawURL string) string {
+	n := strings.ToLower(name + " " + rawURL)
+	if strings.Contains(n, " api") || strings.Contains(n, "/api") || strings.Contains(n, "api.") ||
+		strings.Contains(n, "/v1") || strings.Contains(n, "/v2") || strings.Contains(n, "/v3") || strings.Contains(n, "/v4") {
+		return "api"
+	}
+	u, err := url.Parse(rawURL)
+	if err == nil {
+		h := strings.ToLower(u.Hostname())
+		if strings.HasPrefix(h, "api.") || strings.Contains(h, ".googleapis.com") {
+			return "api"
+		}
+	}
+	return "web"
 }
 
 func looksLikeURL(s string) bool {
@@ -190,7 +233,6 @@ func checkAll(services []Service, client *http.Client, timeout time.Duration, wo
 	}
 	jobs := make(chan Service)
 	out := make(chan Result, len(services))
-
 	var wg sync.WaitGroup
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
@@ -201,7 +243,6 @@ func checkAll(services []Service, client *http.Client, timeout time.Duration, wo
 			}
 		}()
 	}
-
 	go func() {
 		for _, s := range services {
 			jobs <- s
@@ -210,7 +251,6 @@ func checkAll(services []Service, client *http.Client, timeout time.Duration, wo
 		wg.Wait()
 		close(out)
 	}()
-
 	results := make([]Result, 0, len(services))
 	for r := range out {
 		results = append(results, r)
@@ -238,9 +278,11 @@ func statusRank(s Status) int {
 }
 
 func checkOne(s Service, client *http.Client, timeout time.Duration, method string) Result {
-	res := Result{Name: s.Name, URL: s.URL}
+	res := Result{Name: s.Name, URL: s.URL, Kind: s.Kind}
+	if res.Kind == "" {
+		res.Kind = inferKind(s.Name, s.URL)
+	}
 	start := time.Now()
-
 	host := hostOf(s.URL)
 	if host != "" {
 		ips, err := net.LookupHost(host)
@@ -260,17 +302,18 @@ func checkOne(s Service, client *http.Client, timeout time.Duration, method stri
 			}
 		}
 	}
-
 	code, reason, err := doRequest(client, s.URL, method, timeout)
 	res.Latency = time.Since(start)
 	res.HTTPCode = code
-
 	if err != nil {
 		res.Status, res.Reason = classifyNetErr(err)
 		return res
 	}
-
 	res.Reason = reason
+	if s.Kind == "api" {
+		classifyAPI(&res, code)
+		return res
+	}
 	switch {
 	case code == 451:
 		res.Status = StatusBlocked
@@ -288,7 +331,6 @@ func checkOne(s Service, client *http.Client, timeout time.Duration, method stri
 			res.Reason = http.StatusText(code)
 		}
 	case code == 401:
-		// el host responde: el servicio existe, pide auth
 		res.Status = StatusOK
 		res.Reason = "HTTP 401 Unauthorized (el servicio responde)"
 	case code >= 500:
@@ -305,6 +347,20 @@ func checkOne(s Service, client *http.Client, timeout time.Duration, method stri
 	return res
 }
 
+func classifyAPI(res *Result, code int) {
+	switch {
+	case code == 451:
+		res.Status = StatusBlocked
+		res.Reason = "HTTP 451 Unavailable For Legal Reasons"
+	case code >= 500:
+		res.Status = StatusDown
+		res.Reason = fmt.Sprintf("API alcanzada pero %d", code)
+	default:
+		res.Status = StatusOK
+		res.Reason = fmt.Sprintf("API alcanzable (HTTP %d)", code)
+	}
+}
+
 func doRequest(client *http.Client, rawURL, method string, timeout time.Duration) (int, string, error) {
 	try := func(m string) (int, string, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -315,7 +371,6 @@ func doRequest(client *http.Client, rawURL, method string, timeout time.Duration
 		}
 		req.Header.Set("User-Agent", "urlcheck/"+version+" (+local connectivity check)")
 		req.Header.Set("Accept", "*/*")
-
 		resp, err := client.Do(req)
 		if err != nil {
 			return 0, "", err
@@ -324,7 +379,6 @@ func doRequest(client *http.Client, rawURL, method string, timeout time.Duration
 		_, _ = io.CopyN(io.Discard, resp.Body, 2048)
 		return resp.StatusCode, strings.TrimSpace(resp.Status), nil
 	}
-
 	code, reason, err := try(method)
 	if method == "HEAD" {
 		if err != nil {
@@ -341,7 +395,6 @@ func doRequest(client *http.Client, rawURL, method string, timeout time.Duration
 func classifyNetErr(err error) (Status, string) {
 	msg := shortErr(err)
 	low := strings.ToLower(msg)
-
 	switch {
 	case strings.Contains(low, "timeout") || strings.Contains(low, "deadline exceeded"):
 		return StatusDown, "timeout: " + msg
@@ -385,8 +438,7 @@ func isSinkhole(ips []string) bool {
 		if sinkholeIPs[ip] {
 			return true
 		}
-		parsed := net.ParseIP(ip)
-		if parsed != nil && parsed.IsLoopback() {
+		if parsed := net.ParseIP(ip); parsed != nil && parsed.IsLoopback() {
 			return true
 		}
 	}
@@ -409,12 +461,9 @@ func printTable(results []Result) {
 	if urlW > 48 {
 		urlW = 48
 	}
-
 	useColor := isTTY()
-	fmt.Printf("%s  %-*s  %-*s  %6s  %4s  %s\n",
-		pad("ESTADO", 9), nameW, "SERVICIO", urlW, "URL", "ms", "HTTP", "DETALLE")
-	fmt.Println(strings.Repeat("─", 9+2+nameW+2+urlW+2+6+2+4+2+24))
-
+	fmt.Printf("%s  %-4s  %-*s  %-*s  %6s  %4s  %s\n", pad("ESTADO", 9), "TIPO", nameW, "SERVICIO", urlW, "URL", "ms", "HTTP", "DETALLE")
+	fmt.Println(strings.Repeat("─", 9+2+4+2+nameW+2+urlW+2+6+2+4+2+24))
 	var okN, blockedN, downN, errN int
 	for _, r := range results {
 		switch r.Status {
@@ -427,7 +476,6 @@ func printTable(results []Result) {
 		default:
 			errN++
 		}
-
 		st := string(r.Status)
 		if useColor {
 			st = colorStatus(r.Status)
@@ -436,22 +484,14 @@ func printTable(results []Result) {
 		if r.HTTPCode > 0 {
 			httpS = fmt.Sprintf("%d", r.HTTPCode)
 		}
-		fmt.Printf("%s  %-*s  %-*s  %6d  %4s  %s\n",
-			pad(st, 9+colorPad(useColor, r.Status)),
-			nameW, truncate(r.Name, nameW),
-			urlW, truncate(r.URL, urlW),
-			r.latencyMS(),
-			httpS,
-			r.Reason,
-		)
+		kind := r.Kind
+		if kind == "" {
+			kind = "web"
+		}
+		fmt.Printf("%s  %-4s  %-*s  %-*s  %6d  %4s  %s\n", pad(st, 9+colorPad(useColor, r.Status)), kind, nameW, truncate(r.Name, nameW), urlW, truncate(r.URL, urlW), r.latencyMS(), httpS, r.Reason)
 	}
-
 	fmt.Println()
-	fmt.Printf("resumen: %d OK · %d BLOCKED · %d DOWN · %d ERROR  (%d total)\n",
-		okN, blockedN, downN, errN, len(results))
-	if blockedN == 0 && downN == 0 && errN == 0 {
-		fmt.Println("todos los servicios de la lista responden desde esta red.")
-	}
+	fmt.Printf("resumen: %d OK · %d BLOCKED · %d DOWN · %d ERROR  (%d total)\n", okN, blockedN, downN, errN, len(results))
 }
 
 func pad(s string, w int) string {
